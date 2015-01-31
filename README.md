@@ -1,0 +1,3 @@
+# KCTGo
+
+KanColleTribe
