@@ -1,4 +1,4 @@
-package main
+package local
 
 import (
 	"fmt"
@@ -77,8 +77,8 @@ func (server localServer) Run() {
 	log.Fatal(http.ListenAndServe(server.ip+":"+server.port, nil))
 }
 
-func main() {
-	server := NewLocalServer("127.0.0.1", "18996", "tcp",
-		"127.0.0.1", "18999")
-	server.Run()
-}
+//func main() {
+//	server := NewLocalServer("127.0.0.1", "18996", "tcp",
+//		"127.0.0.1", "18999")
+//	server.Run()
+//}
