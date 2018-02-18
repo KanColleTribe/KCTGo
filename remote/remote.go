@@ -75,6 +75,6 @@ func (server remoteServer) Run() {
 }
 
 func main() {
-	server := NewRemoteServer("127.0.0.1", "18999")
-	server.Run()
+	//	server := NewRemoteServer("127.0.0.1", "18999")
+	//	server.Run()
 }
