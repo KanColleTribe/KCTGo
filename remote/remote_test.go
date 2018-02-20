@@ -1,10 +1,13 @@
 package remote
 
 import (
+	"../lib/log"
+	"os"
 	"testing"
 )
 
 func Test_Remote(t *testing.T) {
-	server := NewRemoteServer("127.0.0.1", "18999")
+	logger := log.NewLogger(os.Stdout, os.Stdout)
+	server := NewRemoteServer("127.0.0.1", "18999", "tcp", "", logger)
 	server.Run()
 }
