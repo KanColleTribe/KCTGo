@@ -1,4 +1,4 @@
-package lib
+package log
 
 import (
 	"io"
@@ -18,14 +18,14 @@ func NewLogger(info io.Writer, error io.Writer) *Logger {
 	return logger
 }
 
-func (log *Logger) Info(msg string) {
+func (log *Logger) Info(msg ...interface{}) {
 	log.info.Println(msg)
 }
 
-func (log *Logger) Error(msg string) {
+func (log *Logger) Error(msg ...interface{}) {
 	log.error.Println(msg)
 }
 
-func (log *Logger) Fatal(msg string) {
+func (log *Logger) Fatal(msg ...interface{}) {
 	log.error.Fatal(msg)
 }
