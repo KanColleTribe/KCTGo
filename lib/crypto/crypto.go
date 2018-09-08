@@ -4,11 +4,15 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/des"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/sha256"
 )
 
 type Crypto struct {
 	mode  string
 	nonce []byte
+	label []byte
 }
 
 func (c Crypto) Encrypt(plaintext []byte, key []byte) ([]byte, error) {
@@ -71,6 +75,18 @@ func (c Crypto) Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
 		return ciphertext, err
 	default:
 	}
+
+	return plaintext, err
+}
+
+func (c Crypto) RSAEncrypt(plaintext []byte, pk *rsa.PublicKey) ([]byte, error) {
+	ciphertext, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, pk, plaintext, c.label)
+
+	return ciphertext, err
+}
+
+func (c Crypto) RSADecrypt(ciphertext []byte, sk *rsa.PrivateKey) ([]byte, error) {
+	plaintext, err := rsa.DecryptOAEP(sha256.New(), rand.Reader, sk, ciphertext, c.label)
 
 	return plaintext, err
 }

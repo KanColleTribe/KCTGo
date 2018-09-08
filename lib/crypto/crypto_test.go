@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"crypto/rand"
+	"crypto/rsa"
 	"encoding/hex"
 	"io"
 	"testing"
@@ -45,6 +46,32 @@ func Test3DES(t *testing.T) {
 		t.Fatal(err)
 	} else {
 		t.Logf("%x\n", ciphertext)
+		t.Logf("%s\n", plaintext)
+	}
+}
+
+func TestRSA(t *testing.T) {
+	c := Crypto{
+		label: []byte("test label"),
+	}
+
+	sk, err := rsa.GenerateKey(rand.Reader, 1024)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pk := sk.PublicKey
+
+	ciphertext, err := c.RSAEncrypt([]byte("test plaintext"), &pk)
+	if err != nil {
+		t.Fatal(err)
+	} else {
+		t.Logf("%x\n", ciphertext)
+	}
+
+	plaintext, err := c.RSADecrypt(ciphertext, sk)
+	if err != nil {
+		t.Fatal(err)
+	} else {
 		t.Logf("%s\n", plaintext)
 	}
 }
