@@ -17,9 +17,9 @@ import (
 )
 
 type Crypto struct {
-	mode  string
-	nonce []byte
-	label []byte
+	Mode  string
+	Nonce []byte
+	Label []byte
 }
 
 var pssOption = rsa.PSSOptions{
@@ -32,7 +32,7 @@ func (c Crypto) Encrypt(plaintext []byte, key []byte) ([]byte, error) {
 	var ciphertext []byte
 	var err error
 
-	switch c.mode {
+	switch c.Mode {
 	case "aes":
 		block, err = aes.NewCipher(key)
 		if err != nil {
@@ -43,14 +43,14 @@ func (c Crypto) Encrypt(plaintext []byte, key []byte) ([]byte, error) {
 			return ciphertext, err
 		}
 
-		ciphertext = gcm.Seal(nil, c.nonce, plaintext, nil)
+		ciphertext = gcm.Seal(nil, c.Nonce, plaintext, nil)
 	case "3des":
 		block, err = des.NewTripleDESCipher(key)
 		if err != nil {
 			return ciphertext, err
 		}
 		ciphertext = make([]byte, len(plaintext))
-		stream := cipher.NewCFBEncrypter(block, c.nonce)
+		stream := cipher.NewCFBEncrypter(block, c.Nonce)
 		stream.XORKeyStream(ciphertext, plaintext)
 	default:
 	}
@@ -63,7 +63,7 @@ func (c Crypto) Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
 	var plaintext []byte
 	var err error
 
-	switch c.mode {
+	switch c.Mode {
 	case "aes":
 		block, err = aes.NewCipher(key)
 		if err != nil {
@@ -74,7 +74,7 @@ func (c Crypto) Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
 			return plaintext, err
 		}
 
-		plaintext, err = gcm.Open(nil, c.nonce, ciphertext, nil)
+		plaintext, err = gcm.Open(nil, c.Nonce, ciphertext, nil)
 		return plaintext, err
 	case "3des":
 		block, err = des.NewTripleDESCipher(key)
@@ -82,7 +82,7 @@ func (c Crypto) Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
 			return plaintext, err
 		}
 
-		stream := cipher.NewCFBDecrypter(block, c.nonce)
+		stream := cipher.NewCFBDecrypter(block, c.Nonce)
 		stream.XORKeyStream(ciphertext, ciphertext)
 		return ciphertext, err
 	default:
@@ -94,13 +94,13 @@ func (c Crypto) Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
 // RSA
 
 func (c Crypto) RSAEncrypt(plaintext []byte, pk *rsa.PublicKey, random io.Reader) ([]byte, error) {
-	ciphertext, err := rsa.EncryptOAEP(sha256.New(), random, pk, plaintext, c.label)
+	ciphertext, err := rsa.EncryptOAEP(sha256.New(), random, pk, plaintext, c.Label)
 
 	return ciphertext, err
 }
 
 func (c Crypto) RSADecrypt(ciphertext []byte, sk *rsa.PrivateKey, random io.Reader) ([]byte, error) {
-	plaintext, err := rsa.DecryptOAEP(sha256.New(), random, sk, ciphertext, c.label)
+	plaintext, err := rsa.DecryptOAEP(sha256.New(), random, sk, ciphertext, c.Label)
 
 	return plaintext, err
 }
