@@ -12,8 +12,8 @@ import (
 func TestAES(t *testing.T) {
 	nonce, _ := hex.DecodeString("64a9433eae7ccceee2fc0eda")
 	c := Crypto{
-		mode:  "aes",
-		nonce: nonce,
+		Mode:  "aes",
+		Nonce: nonce,
 	}
 
 	key := make([]byte, 32)
@@ -33,8 +33,8 @@ func TestAES(t *testing.T) {
 func Test3DES(t *testing.T) {
 	nonce, _ := hex.DecodeString("64a9433eae7cccee")
 	c := Crypto{
-		mode:  "3des",
-		nonce: nonce,
+		Mode:  "3des",
+		Nonce: nonce,
 	}
 
 	key := make([]byte, 24)
@@ -53,7 +53,7 @@ func Test3DES(t *testing.T) {
 
 func TestRSA(t *testing.T) {
 	c := Crypto{
-		label: []byte("test label"),
+		Label: []byte("test label"),
 	}
 
 	random := make([]byte, 1024)
@@ -147,7 +147,7 @@ func TestKeyFile(t *testing.T) {
 		t.Logf("%x\n", key)
 
 		c := Crypto{
-			label: []byte("test label"),
+			Label: []byte("test label"),
 		}
 
 		random := make([]byte, 1024)
