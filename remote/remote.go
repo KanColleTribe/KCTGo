@@ -1,29 +1,36 @@
 package remote
 
 import (
-	"../lib/log"
 	"bufio"
+	"bytes"
+	"github.com/wuyuMk7/KCTGo/lib/log"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strconv"
+	"time"
+
+	"github.com/wuyuMk7/KCTGo/lib/crypto"
 )
 
 type remoteServer struct {
 	ip       string
 	port     string
 	protocol string
-	crypto   string
 	logger   *log.Logger
+	sk       string
 }
 
-func NewRemoteServer(ip string, port string, protocol string, crypto string, logger *log.Logger) remoteServer {
+func NewRemoteServer(ip string, port string, protocol string,
+	logger *log.Logger, sk string) remoteServer {
+
 	server := remoteServer{
 		ip:       ip,
 		port:     port,
 		protocol: protocol,
-		crypto:   crypto,
 		logger:   logger,
+		sk:       sk,
 	}
 
 	return server
@@ -32,7 +39,53 @@ func NewRemoteServer(ip string, port string, protocol string, crypto string, log
 func proxyHandler(conn net.Conn, logger *log.Logger) {
 	defer conn.Close()
 
-	conn_reader := bufio.NewReader(conn)
+	conn.SetReadDeadline(time.Now().Add(10 * time.Second))
+	conn_content_reader := bufio.NewReader(conn)
+
+	conn_content_length_bytes := make([]byte, 16)
+	_, err := conn_content_reader.Read(conn_content_length_bytes)
+	if err != nil {
+		err_msg := "Cannot read data length from user request -- " + err.Error()
+		logger.Error(err_msg)
+		return
+	}
+
+	conn_content_length, err := strconv.ParseInt(string(bytes.Trim(conn_content_length_bytes, "\x00")), 16, 0)
+	if err != nil {
+		err_msg := "Cannot convert data length from user request -- " + err.Error()
+		logger.Error(err_msg)
+		return
+	}
+
+	conn_content := make([]byte, 0, conn_content_length)
+	buf_tmp := make([]byte, conn_content_reader.Size())
+	for int64(len(conn_content)) < conn_content_length {
+		count, err := conn_content_reader.Read(buf_tmp)
+		if err != nil {
+			err_msg := "Cannot read data length from server response -- " + err.Error()
+			logger.Error(err_msg)
+			return
+		}
+
+		conn_content = append(conn_content, buf_tmp[:count]...)
+	}
+
+	conn_content = bytes.Trim(conn_content, " \r\n")
+	c := crypto.Crypto{
+		Mode:  "aes",
+		Nonce: []byte("5a3de1763215"),
+		Label: []byte("sharing"),
+	}
+	key := []byte("a32fs5623984wer4")
+
+	decrypted_bytes, err := c.Decrypt(conn_content, key)
+	if err != nil {
+		err_msg := "Cannot decrypt data from user request -- " + err.Error()
+		logger.Error(err_msg)
+		return
+	}
+
+	conn_reader := bufio.NewReader(bytes.NewReader(decrypted_bytes))
 	req, err := http.ReadRequest(conn_reader)
 	if err != nil {
 		err_msg := "Cannot extract request from user request -- " + err.Error()
@@ -66,8 +119,20 @@ func proxyHandler(conn net.Conn, logger *log.Logger) {
 		return
 	}
 
+	encrypted_bytes, err := c.Encrypt(resp_bytes, key)
+	if err != nil {
+		err_msg := "Cannot encrypt response -- " + err.Error()
+		logger.Error(err_msg)
+		return
+	}
+
+	content_length := []byte(strconv.FormatInt(int64(len(encrypted_bytes)), 16))
+	content_length_bytes := make([]byte, 16)
+	copy(content_length_bytes[16-len(content_length):], content_length)
+
 	conn_writer := bufio.NewWriter(conn)
-	conn_writer.Write(resp_bytes)
+	conn_writer.Write(content_length_bytes)
+	conn_writer.Write(encrypted_bytes)
 	conn_writer.Flush()
 }
 
